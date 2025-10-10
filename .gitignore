@@ -1,0 +1,43 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Gradle
+.gradle/
+**/build/
+
+# Keep the wrapper (required to build everywhere)
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# Android/NDK
+.cxx/
+.externalNativeBuild/
+captures/
+
+# IDE (Android Studio/IntelliJ)
+*.iml
+.idea/*
+!.idea/runConfigurations/
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
+
+# Local machine config
+local.properties
+
+# Signing / secrets (store these outside VCS)
+*.jks
+*.keystore
+keystore.properties
+key.properties
+
+# Logs
+*.log
+
+# Artifacts (if created outside build/)
+*.apk
+*.ap_
+*.aab
+
+# Kotlin/Java extras
+.kotlinc/
