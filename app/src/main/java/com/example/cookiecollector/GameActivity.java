@@ -379,8 +379,14 @@ public class GameActivity extends AppCompatActivity {
         builder.setMessage(s);
         builder.setCancelable(false);
         builder.setPositiveButton("OK", (DialogInterface.OnClickListener) (dialog, which) ->{
-            dialog.cancel();
+            // Create an Intent to launch ResultsActivity
+            Intent intent = new Intent(GameActivity.this, ResultsActivity.class);
+            startActivity(intent);
+
+            // Finish GameActivity so the user can't go back to it
+            finish();
         });
+
         builder.setNegativeButton("BACK", (DialogInterface.OnClickListener) (dialog, which) ->{
             finish();
         });
@@ -395,23 +401,10 @@ public class GameActivity extends AppCompatActivity {
         ok.setTextSize(18);
         Button back = (Button) alertDialog.findViewById(android.R.id.button2);
         back.setTextSize(18);
-//        builder.setPositiveButton("OK", (DialogInterface.OnClickListener) (dialog, which) ->{
-//            dialog.cancel();
-//        });
-//
-//        AlertDialog alertDialog = builder.create();
-//        alertDialog.show();
-//
-//        TextView textView = (TextView) alertDialog.findViewById(android.R.id.message);
-//        textView.setTextSize(22);
-//        Button ok = (Button) alertDialog.findViewById(android.R.id.button1);
-//        ok.setTextSize(18);
     }
 
     void save(){
         try{
-            //EditText e = findViewById(R.id.editTextFileName);
-            //String fileName = e.getText().toString() + ".csv";
             UserAndStudyInfo x = infoData;
             Date d = Calendar.getInstance().getTime();
             String tStamp = d.getMonth()+"-"+d.getDate()+"_"+d.getHours()+"-"+d.getMinutes();
