@@ -11,7 +11,7 @@ import java.util.ArrayList;
 public class UserAndStudyInfo implements Serializable {
 
     private static final int SMALL_RADIUS = 12;
-    private static final int LARGE_RADIUS = 24;
+    private static final int LARGE_RADIUS = 16;
 
     private String id;
     private String gender;
@@ -20,7 +20,7 @@ public class UserAndStudyInfo implements Serializable {
     private String finger;
     private int rows;
     private int columns;
-    private float radius;
+    //The diameter of the cookie displayed on the screen
     private int diameter;
     private int totalCircles;
     private int distance;
@@ -53,13 +53,14 @@ public class UserAndStudyInfo implements Serializable {
             diameter = LARGE_RADIUS;
         }
 
-        radius = ((float)(diameter))/2;
-
 //        if(distance.equals(c.getString(R.string.close))) this.distance = 1;
 //        else if(distance.equals(c.getString(R.string.mediumDist))) this.distance = 3;
 //        else if(distance.equals(c.getString(R.string.far))) this.distance = 5;
 //        else this.distance = 13;
-        this.distance = 20 - diameter;
+        // old distance
+//        this.distance = 20 - diameter;
+//
+        this.distance = 22 - diameter;
 
 //        if(session.equals(c.getString(R.string.warmup))) trialsPerCircle = 1;
 //        else trialsPerCircle = 20;
@@ -97,17 +98,13 @@ public class UserAndStudyInfo implements Serializable {
     public int getColumns() { return columns; }
     public void setColumns(int columns) { this.columns = columns; }
 
-    public float getRadius() { return radius; }
-    public void setRadius(float radius) { this.radius = radius; }
-
+    public float getRadius() { return (float)diameter / 2; }
     public int getDiameter() { return diameter; };
     public void setDiameter(int diameter) { this.diameter = diameter; }
-
     public int getTotalCircles() { return totalCircles; }
     public void setTotalCircles(int totalCircles) { this.totalCircles = totalCircles; }
 
     public int getDistance() { return distance; }
-    public void setDistance(int distance) { this.distance = distance; }
 
 //    public int getTrialsPerCircle(){ return trialsPerCircle; }
 //    public void setTrialsPerCircle(int trialsPerCircle) { this.trialsPerCircle = trialsPerCircle; }

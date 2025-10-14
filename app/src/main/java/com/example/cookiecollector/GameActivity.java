@@ -70,8 +70,6 @@ public class GameActivity extends AppCompatActivity {
         Bundle infoDataBundle = intent.getBundleExtra("data");
         infoData = (UserAndStudyInfo) infoDataBundle.getSerializable("data");
 
-//        TextView instructionsTextView = findViewById(R.id.instructionsTextView);
-//        instructionsTextView.setVisibility(View.VISIBLE);
         LinearLayout l = findViewById(R.id.fileNameAndSaveLayout);
         l.setVisibility(View.GONE);
 
@@ -79,10 +77,9 @@ public class GameActivity extends AppCompatActivity {
         cookies = findViewById(R.id.cookies);
         symbols = findViewById(R.id.symbols);
 
-        float r = mmToPx(infoData.getRadius());
-        float d = mmToPx(infoData.getDistance())/2;
-        int D = (int)d;
-        symbols.setTranslationY(-(r + mmToPx(3+1)));
+        float targetRadiusPx = mmToPx(infoData.getRadius());
+        float halfDistancePx = mmToPx(infoData.getDistance())/2;
+        symbols.setTranslationY(-(targetRadiusPx + mmToPx(3+1)));
         //Log.d("radius", ""+r);
         for(int i = 0; i < infoData.getRows(); i++){
             TableRow tr = new TableRow(this);
@@ -93,9 +90,10 @@ public class GameActivity extends AppCompatActivity {
                 circle.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 circle.setImageResource(R.drawable.circle);
                 circle.setAdjustViewBounds(true);
-                circle.setMaxHeight((int)(2*(r+d)));
-                circle.setMaxWidth((int)(2*(r+d)));
-                circle.setPadding(D, D, D, D);
+                circle.setMaxHeight((int)(2*(targetRadiusPx+halfDistancePx)));
+                circle.setMaxWidth((int)(2*(targetRadiusPx+halfDistancePx)));
+                circle.setPadding((int) halfDistancePx, (int) halfDistancePx, (int) halfDistancePx, (int) halfDistancePx);
+                // Controls whether the circles for cookies will be visible
                 circle.setVisibility(View.INVISIBLE);
                 tr.addView(circle);
 
@@ -103,9 +101,12 @@ public class GameActivity extends AppCompatActivity {
                 cookie.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 cookie.setImageResource(R.drawable.cookie);
                 cookie.setAdjustViewBounds(true);
-                cookie.setMaxHeight((int)(2*(r+d)));
-                cookie.setMaxWidth((int)(2*(r+d)));
-                cookie.setPadding(D+(int)(r/2), D+(int)(r/2), D+(int)(r/2), D+(int)(r/2));
+                cookie.setMaxHeight((int)(2*(targetRadiusPx+halfDistancePx)));
+                cookie.setMaxWidth((int)(2*(targetRadiusPx+halfDistancePx)));
+                // original padding which shows part
+//                int cookiePadding = (int) halfDistancePx + (int)(targetRadiusPx/2);
+                int cookiePadding = (int) halfDistancePx;
+                cookie.setPadding(cookiePadding, cookiePadding, cookiePadding, cookiePadding);
                 cookie.setVisibility(View.INVISIBLE);
                 mtr.addView(cookie);
 
@@ -114,10 +115,11 @@ public class GameActivity extends AppCompatActivity {
                 symbol.setImageResource(R.drawable.checkmark);
                 symbol.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.checkmark_green)));
                 symbol.setAdjustViewBounds(true);
-                symbol.setMaxHeight((int)(2*(r+d)));
-                symbol.setMaxWidth((int)(2*(r+d)));
+                symbol.setMaxHeight((int)(2*(targetRadiusPx+halfDistancePx)));
+                symbol.setMaxWidth((int)(2*(targetRadiusPx+halfDistancePx)));
                 //symbol.setPadding(D+(int)(3*r/4), D+(int)(3*r/4), D+(int)(3*r/4), D+(int)(3*r/4));
-                symbol.setPadding((int)(D+r-(mmToPx(6)/2)), (int)(D+r-(mmToPx(6)/2)), (int)(D+r-(mmToPx(6)/2)), (int)(D+r-(mmToPx(6)/2)));
+                int symbolPadding = (int)(halfDistancePx+targetRadiusPx-(mmToPx(6)/2));
+                symbol.setPadding(symbolPadding, symbolPadding, symbolPadding, symbolPadding);
 //                symbol.setVisibility(View.INVISIBLE);
                 symbol.setAlpha((float)0);
                 str.addView(symbol);
