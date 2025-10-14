@@ -103,7 +103,7 @@ public class GameActivity extends AppCompatActivity {
                 cookie.setAdjustViewBounds(true);
                 cookie.setMaxHeight((int)(2*(targetRadiusPx+halfDistancePx)));
                 cookie.setMaxWidth((int)(2*(targetRadiusPx+halfDistancePx)));
-                // original padding which shows part
+                // original padding which shows part of circles
 //                int cookiePadding = (int) halfDistancePx + (int)(targetRadiusPx/2);
                 int cookiePadding = (int) halfDistancePx;
                 cookie.setPadding(cookiePadding, cookiePadding, cookiePadding, cookiePadding);
@@ -376,11 +376,46 @@ public class GameActivity extends AppCompatActivity {
             s = "You collected " + totalHits + " cookies in " + timeString + "! Well done!";
         }
 
+        // Create results string that will be passed to the result activity
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Trial, Distance, Size of Cooke, Duration(s), Success");
+        stringBuilder.append("\n");
+
+        float[] prevCoor = {-1, -1};
+        for(int i = 0; i < infoData.getTotalTrials(); i++){
+            int cir = infoData.getCorrectSequence(i);
+            float[] corrCoor = infoData.getCorrectCoordinates(i);
+            float dist = (float) Math.sqrt(Math.pow(prevCoor[0]-corrCoor[0], 2) + Math.pow(prevCoor[1]-corrCoor[1], 2));
+            ArrayList<UserAndStudyInfo.Touchpoint> ts = infoData.getTouchpoints(i);
+            for(int j = 0; j < ts.size(); j++){
+                UserAndStudyInfo.Touchpoint t = ts.get(j);
+                boolean correct = t.correct;
+
+                stringBuilder.append(i)
+                        .append(", ")
+                        .append(dist)
+                        .append(", ")
+                        .append(infoData.getDiameter())
+                        .append(", ")
+                        .append(t.milliseconds/(float)1000)
+                        .append(", ")
+                        .append(correct)
+                        .append("\n");
+            }
+            prevCoor = corrCoor;
+        }
+
+
         builder.setMessage(s);
         builder.setCancelable(false);
         builder.setPositiveButton("OK", (DialogInterface.OnClickListener) (dialog, which) ->{
             // Create an Intent to launch ResultsActivity
             Intent intent = new Intent(GameActivity.this, ResultsActivity.class);
+
+            // Convert StringBuilder to String and add it as an extra
+            String resultsData = stringBuilder.toString();
+            intent.putExtra("key_results_data", resultsData);
+
             startActivity(intent);
 
             // Finish GameActivity so the user can't go back to it
