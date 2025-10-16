@@ -1,10 +1,15 @@
 package com.example.cookiecollector;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView; // Import TextView
+import android.widget.TableLayout;
+import android.widget.TableRow;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -17,32 +22,72 @@ public class ResultsActivity extends AppCompatActivity {
 
         // Find the views
         Button restartButton = findViewById(R.id.restartButton);
-        TextView resultsTextView = findViewById(R.id.resultsTextView);
+        TableLayout tableLayout = findViewById(R.id.resultsTableLayout);
 
-        // Get the Intent that started this activity
+        // Get the data from the intent
         Intent intent = getIntent();
-        // Retrieve the string data using the same key
         String resultsData = intent.getStringExtra("key_results_data");
 
-        // Set the text of the TextView to the results data
+        // Populate the table
         if (resultsData != null && !resultsData.isEmpty()) {
-            resultsTextView.setText(resultsData);
+            populateTable(tableLayout, resultsData);
         } else {
-            resultsTextView.setText("No results data found.");
+            // Display a message if no data is found
+            TextView noDataTextView = new TextView(this);
+            noDataTextView.setText("No results data found.");
+            noDataTextView.setPadding(10, 10, 10, 10);
+            tableLayout.addView(noDataTextView);
         }
 
-        // Set an OnClickListener for the restart button
-        restartButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Create an Intent to go back to MainActivity
-                Intent intent = new Intent(ResultsActivity.this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                finish(); // Finish the current ResultsActivity
-            }
+        // Set listener for the restart button
+        restartButton.setOnClickListener(v -> {
+            Intent restartIntent = new Intent(ResultsActivity.this, MainActivity.class);
+            restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(restartIntent);
+            finish();
         });
     }
+
+    private void populateTable(TableLayout tableLayout, String data) {
+        String[] lines = data.split("\n");
+
+        // First line is the header
+        String[] headerCells = lines[0].split(",");
+        TableRow headerRow = new TableRow(this);
+        for (String headerText : headerCells) {
+            TextView headerTextView = createTableCell(headerText, true); // `true` for bold header
+            headerRow.addView(headerTextView);
+        }
+        tableLayout.addView(headerRow);
+
+        // Add the rest of the data rows
+        for (int i = 1; i < lines.length; i++) {
+            String[] dataCells = lines[i].split(",");
+            TableRow dataRow = new TableRow(this);
+            for (String cellText : dataCells) {
+                TextView dataTextView = createTableCell(cellText, false); // `false` for regular text
+                dataRow.addView(dataTextView);
+            }
+            tableLayout.addView(dataRow);
+        }
+    }
+
+    // Helper method to create a TextView for a table cell
+    private TextView createTableCell(String text, boolean isHeader) {
+        TextView textView = new TextView(this);
+        textView.setText(text);
+        textView.setTextColor(Color.BLACK);
+        textView.setTextSize(16); // Larger text size
+        textView.setGravity(Gravity.CENTER);
+        textView.setPadding(10, 10, 10, 10); // Add some padding
+
+        if (isHeader) {
+            textView.setTypeface(null, Typeface.BOLD);
+        }
+
+        return textView;
+    }
 }
+
 
 

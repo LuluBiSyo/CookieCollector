@@ -20,12 +20,14 @@
         android:layout_below="@id/restartButton"
         android:layout_marginTop="16dp">
 
-        <TextView
-            android:id="@+id/resultsTextView"
+        <TableLayout
+            android:id="@+id/resultsTableLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="14sp"
-            tools:text="Trial, Distance, Size of Cooke, Duration(s), Success\n0, 123.4, 20, 0.5, true\n..." />
+            android:stretchColumns="*">
+            <!-- Table rows will be added here dynamically from code -->
+        </TableLayout>
+
     </ScrollView>
 
 </RelativeLayout>

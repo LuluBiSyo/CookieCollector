@@ -378,29 +378,25 @@ public class GameActivity extends AppCompatActivity {
 
         // Create results string that will be passed to the result activity
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Trial, Distance, Size of Cooke, Duration(s), Success");
-        stringBuilder.append("\n");
+        // Create a header row
+        stringBuilder.append("Trial,Distance,Size,Duration,Success\n");
 
         float[] prevCoor = {-1, -1};
-        for(int i = 0; i < infoData.getTotalTrials(); i++){
-            int cir = infoData.getCorrectSequence(i);
+        for (int i = 0; i < infoData.getTotalTrials(); i++) {
             float[] corrCoor = infoData.getCorrectCoordinates(i);
-            float dist = (float) Math.sqrt(Math.pow(prevCoor[0]-corrCoor[0], 2) + Math.pow(prevCoor[1]-corrCoor[1], 2));
+            float dist = (prevCoor[0] == -1) ? 0 : (float) Math.sqrt(Math.pow(prevCoor[0] - corrCoor[0], 2) + Math.pow(prevCoor[1] - corrCoor[1], 2));
             ArrayList<UserAndStudyInfo.Touchpoint> ts = infoData.getTouchpoints(i);
-            for(int j = 0; j < ts.size(); j++){
+
+            for (int j = 0; j < ts.size(); j++) {
                 UserAndStudyInfo.Touchpoint t = ts.get(j);
                 boolean correct = t.correct;
 
-                stringBuilder.append(i)
-                        .append(", ")
-                        .append(dist)
-                        .append(", ")
-                        .append(infoData.getDiameter())
-                        .append(", ")
-                        .append(t.milliseconds/(float)1000)
-                        .append(", ")
-                        .append(correct)
-                        .append("\n");
+                // Append a CSV-like line for each touchpoint
+                stringBuilder.append(i).append(",");
+                stringBuilder.append(String.format("%.2f", dist)).append(",");
+                stringBuilder.append(infoData.getDiameter()).append(",");
+                stringBuilder.append(String.format("%.3f", t.milliseconds / 1000f)).append(",");
+                stringBuilder.append(correct).append("\n"); // Use newline as a separator
             }
             prevCoor = corrCoor;
         }
