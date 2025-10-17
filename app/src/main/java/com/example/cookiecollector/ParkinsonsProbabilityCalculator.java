@@ -16,7 +16,6 @@ public class ParkinsonsProbabilityCalculator {
     private static final float NON_PD_w = 5.997F;
     private static final float NON_PD_c = 58170.11F;
     private static final float NON_PD_d = 2921.22F;
-//    private static final float PD_a = 555.23F;
     private static final float PD_a = 955.23F;
     private static final float PD_b = 165.69F;
     private static final float PD_w = 5.38F;

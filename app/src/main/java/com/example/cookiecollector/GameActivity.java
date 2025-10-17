@@ -377,7 +377,7 @@ public class GameActivity extends AppCompatActivity {
         if (totalHits == 1) {
             s = "You collected 1 cookie in " + timeString + ".";
         } else {
-            s = "You collected " + totalHits + " cookies in " + timeString + "! Well done!";
+            s = String.format("You collected %d cookies in %s! Well done!", totalHits, timeString);
         }
 
         // Create results string that will be passed to the result activity
