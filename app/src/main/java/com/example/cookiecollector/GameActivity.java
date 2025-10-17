@@ -57,6 +57,8 @@ public class GameActivity extends AppCompatActivity {
 
     int totalHits = 0;
 
+    private static final boolean SAVE_DATA = false;
+
     //boolean clickedCorrectCircle = false;
 
     @Override
@@ -354,8 +356,10 @@ public class GameActivity extends AppCompatActivity {
         displayTrialsDone();
         running = false;
         state = FINISHED;
-        save();
-
+        if (SAVE_DATA) {
+            save();
+        }
+        
         AlertDialog.Builder builder = new AlertDialog.Builder(GameActivity.this);
         String s = "";
         int minutes = (int) (totalTime / 60);
@@ -380,6 +384,8 @@ public class GameActivity extends AppCompatActivity {
         StringBuilder stringBuilder = new StringBuilder();
         // Create a header row
         stringBuilder.append("Trial,Distance,Size,Duration,Success\n");
+        // Define ArrayLists to hold probability values
+        ArrayList<Float> probabilityList = new ArrayList<>();
 
         float[] prevCoor = {-1, -1};
         for (int i = 0; i < infoData.getTotalTrials(); i++) {
@@ -387,20 +393,26 @@ public class GameActivity extends AppCompatActivity {
             float dist = (prevCoor[0] == -1) ? 0 : (float) Math.sqrt(Math.pow(prevCoor[0] - corrCoor[0], 2) + Math.pow(prevCoor[1] - corrCoor[1], 2));
             ArrayList<UserAndStudyInfo.Touchpoint> ts = infoData.getTouchpoints(i);
 
-            for (int j = 0; j < ts.size(); j++) {
-                UserAndStudyInfo.Touchpoint t = ts.get(j);
-                boolean correct = t.correct;
+            if (dist > 0) {
+                for (int j = 0; j < ts.size(); j++) {
+                    UserAndStudyInfo.Touchpoint t = ts.get(j);
+                    boolean correct = t.correct;
 
-                // Append a CSV-like line for each touchpoint
-                stringBuilder.append(i).append(",");
-                stringBuilder.append(String.format("%.2f", dist)).append(",");
-                stringBuilder.append(infoData.getDiameter()).append(",");
-                stringBuilder.append(String.format("%.3f", t.milliseconds / 1000f)).append(",");
-                stringBuilder.append(correct).append("\n"); // Use newline as a separator
+                    // Append a CSV-like line for each touchpoint
+                    stringBuilder.append(i).append(",");
+                    stringBuilder.append(String.format("%.2f", dist)).append(",");
+                    stringBuilder.append(infoData.getDiameter()).append(",");
+                    stringBuilder.append(String.format("%.3f", t.milliseconds / 1000f)).append(",");
+                    stringBuilder.append(correct).append("\n"); // Use newline as a separator
+
+                    float probability = ParkinsonsProbabilityCalculator.calculateParkinsonProbability(dist, infoData.getDiameter(), t.milliseconds);
+                    if (probability > 0) {
+                        probabilityList.add(probability);
+                    }
+                }
             }
             prevCoor = corrCoor;
         }
-
 
         builder.setMessage(s);
         builder.setCancelable(false);
@@ -411,6 +423,17 @@ public class GameActivity extends AppCompatActivity {
             // Convert StringBuilder to String and add it as an extra
             String resultsData = stringBuilder.toString();
             intent.putExtra("key_results_data", resultsData);
+
+            // Calculate the mean of the probability list
+            float sum = 0;
+            if (!probabilityList.isEmpty()) {
+                for (Float prob : probabilityList) {
+                    sum += prob;
+                }
+                float meanProbability = sum / probabilityList.size();
+                // Add the calculated mean to the intent
+                intent.putExtra("key_mean_probability", meanProbability);
+            }
 
             startActivity(intent);
 
@@ -485,7 +508,12 @@ public class GameActivity extends AppCompatActivity {
             }
             pw.close();
 
-            Log.d("Saved File Location", f.getPath());
+            if (f.exists() && f.canWrite()) {
+                Log.d("FileSaveSuccess", "Data successfully saved to: " + f.getAbsolutePath());
+            } else {
+                Log.e("FileSaveError", "Failed to save or access the file at: " + f.getAbsolutePath());
+            }
+
 
             TextView t = findViewById(R.id.textView7);
             t.setText("");

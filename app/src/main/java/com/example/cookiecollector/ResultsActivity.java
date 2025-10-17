@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -20,13 +23,48 @@ public class ResultsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_results);
 
-        // Find the views
+// Find the views
+        TextView probabilityTextView = findViewById(R.id.probabilityTextView); // Find the new TextView
         Button restartButton = findViewById(R.id.restartButton);
         TableLayout tableLayout = findViewById(R.id.resultsTableLayout);
 
         // Get the data from the intent
         Intent intent = getIntent();
         String resultsData = intent.getStringExtra("key_results_data");
+        // Retrieve the mean probability, provide a default value (e.g., -1.0f) if not found
+        float meanProbability = intent.getFloatExtra("key_mean_probability", -1.0f);
+
+        // Display the probability score with conditional coloring
+        if (meanProbability >= 0) {
+            float score = meanProbability * 100;
+            String scoreText = String.format("%.1f%%", score);
+            String fullText = "Parkinson's Disease Risk: " + scoreText;
+
+            // Use a SpannableStringBuilder to apply color to only part of the text
+            SpannableStringBuilder ssb = new SpannableStringBuilder(fullText);
+
+            // Determine the color based on the score
+            int scoreColor = (score >= 50) ? Color.RED : Color.GREEN;
+
+            // Create a style span for the color
+            ForegroundColorSpan colorSpan = new ForegroundColorSpan(scoreColor);
+
+            // Find the start and end positions of the score number within the full text
+            int startIndex = fullText.indexOf(scoreText);
+            int endIndex = startIndex + scoreText.length();
+
+            // Apply the color span to only the score number
+            ssb.setSpan(colorSpan, startIndex, endIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            // Set the styled text on the TextView
+            probabilityTextView.setText(ssb);
+
+        } else {
+            probabilityTextView.setText("Risk score could not be calculated.");
+            probabilityTextView.setTextColor(Color.BLACK); // Set default color for the error message
+        }
+
+
 
         // Populate the table
         if (resultsData != null && !resultsData.isEmpty()) {

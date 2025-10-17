@@ -14,20 +14,33 @@
         android:layout_centerHorizontal="true"
         android:text="Restart" />
 
+    <!-- Add this TextView to display the probability -->
+    <TextView
+        android:id="@+id/probabilityTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/restartButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:textColor="@android:color/black"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        tools:text="PD Risk Score: 55.5%" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/restartButton"
-        android:layout_marginTop="16dp">
+        android:layout_below="@id/probabilityTextView"
+        android:layout_marginTop="8dp">
 
         <TableLayout
             android:id="@+id/resultsTableLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:stretchColumns="*">
-            <!-- Table rows will be added here dynamically from code -->
-        </TableLayout>
+            android:stretchColumns="*" />
 
     </ScrollView>
 
 </RelativeLayout>
+
