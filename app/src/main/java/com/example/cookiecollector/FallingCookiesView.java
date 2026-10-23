@@ -35,6 +35,10 @@ public class FallingCookiesView extends View {
         float spin;       // degrees per ms
         // Time the cookie has been falling, excluding pauses
         long fallingMillis;
+        // How long this cookie takes to cross the whole screen; set when it appears
+        long fallMillis;
+        // Closest the cutting stroke came to the cookie's center, in px
+        float minOffsetPx = Float.MAX_VALUE;
         // Set while the current stroke is inside the cookie after entering it from outside
         boolean entered;
         boolean touchedAtDown;
@@ -51,10 +55,14 @@ public class FallingCookiesView extends View {
         long age;
     }
 
-    // Slow enough for older adults: a cookie takes 9 s to cross the screen,
+    // Starts slow enough for older adults: a cookie takes 9 s to cross the screen,
     // and a new one appears every 2.5 s, so about 3-4 are on screen at once.
-    private static final long FALL_MILLIS = 9000;
-    private static final long SPAWN_INTERVAL_MILLIS = 2500;
+    // The game can speed up; cookies then appear more often by the same factor.
+    static final long START_FALL_MILLIS = 9000;
+    private static final long START_SPAWN_INTERVAL_MILLIS = 2500;
+    // Free space kept between a cookie's edge and the screen edge, so a swipe can start
+    // outside the cookie on either side
+    private static final float EDGE_MARGIN_MM = 12f;
     private static final long TRAIL_MILLIS = 180;
     private static final long HALF_MILLIS = 900;
     private static final float GRAVITY = 0.0025f; // px per ms^2, for the halves
@@ -78,6 +86,7 @@ public class FallingCookiesView extends View {
     private boolean done = false;
     private long lastFrameTime;
     private long sinceLastSpawn;
+    private long fallMillis = START_FALL_MILLIS;
     private float lastX;
     private float lastY;
 
@@ -100,8 +109,11 @@ public class FallingCookiesView extends View {
         int d = Math.max(1, (int) (2 * radiusPx));
         cookieBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.cookie), d, d, true);
         // Spawn the first cookie as soon as the game starts
-        sinceLastSpawn = SPAWN_INTERVAL_MILLIS;
+        sinceLastSpawn = START_SPAWN_INTERVAL_MILLIS;
     }
+
+    /** Fall time for cookies that appear from now on; cookies already falling keep their speed. */
+    void setFallMillis(long fallMillis) { this.fallMillis = fallMillis; }
 
     GameEffects getEffects() { return effects; }
     float getRadiusPx() { return radiusPx; }
@@ -144,14 +156,16 @@ public class FallingCookiesView extends View {
     }
 
     private void step(long dt) {
-        float speed = fallSpeed();
-
         sinceLastSpawn += dt;
-        if (spawnedCookies < totalCookies && sinceLastSpawn >= SPAWN_INTERVAL_MILLIS) {
+        long spawnInterval = START_SPAWN_INTERVAL_MILLIS * fallMillis / START_FALL_MILLIS;
+        if (spawnedCookies < totalCookies && sinceLastSpawn >= spawnInterval) {
             sinceLastSpawn = 0;
             Cookie c = new Cookie();
             c.number = spawnedCookies++;
-            c.x = radiusPx + random.nextFloat() * Math.max(0, getWidth() - 2 * radiusPx);
+            c.fallMillis = fallMillis;
+            // Keep away from the side edges; on a very narrow screen fall back to the middle
+            float margin = Math.min(radiusPx + GameUtils.mmToPx(getContext(), EDGE_MARGIN_MM), getWidth() / 2f);
+            c.x = margin + random.nextFloat() * Math.max(0, getWidth() - 2 * margin);
             c.y = -radiusPx;
             c.angle = random.nextFloat() * 360;
             c.spin = (random.nextFloat() - 0.5f) * 0.09f;
@@ -161,7 +175,7 @@ public class FallingCookiesView extends View {
         Iterator<Cookie> it = cookies.iterator();
         while (it.hasNext()) {
             Cookie c = it.next();
-            c.y += speed * dt;
+            c.y += fallSpeed(c) * dt;
             c.angle += c.spin * dt;
             c.fallingMillis += dt;
             if (c.y - radiusPx > getHeight()) {
@@ -190,7 +204,7 @@ public class FallingCookiesView extends View {
         }
     }
 
-    private float fallSpeed() { return (getHeight() + 2 * radiusPx) / FALL_MILLIS; } // px per ms
+    private float fallSpeed(Cookie c) { return (getHeight() + 2 * radiusPx) / c.fallMillis; } // px per ms
 
     private void drawHalves(Canvas canvas) {
         for (Half h : halves) {
@@ -242,7 +256,7 @@ public class FallingCookiesView extends View {
             h.y = c.y;
             // Normal to the cut, pointing to this half's side
             h.vx = -uy * side * push + ux * 0.03f * density;
-            h.vy = ux * side * push + uy * 0.03f * density + fallSpeed() - 0.1f * density;
+            h.vy = ux * side * push + uy * 0.03f * density + fallSpeed(c) - 0.1f * density;
             h.cutAngle = cutAngle;
             h.angle = c.angle - cutAngle;
             h.spin = side * 0.25f;
@@ -263,6 +277,7 @@ public class FallingCookiesView extends View {
                 for (Cookie c : cookies) {
                     c.entered = false;
                     c.touchedAtDown = inside(c, x, y);
+                    c.minOffsetPx = Float.MAX_VALUE;
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -290,6 +305,8 @@ public class FallingCookiesView extends View {
                 continue;
             }
             if (!c.entered && segmentHitsCookie(c, lastX, lastY, x, y)) c.entered = true;
+            // Track how close to the center the cut passes, for the accuracy bonus
+            if (c.entered) c.minOffsetPx = Math.min(c.minOffsetPx, distanceToSegment(c, lastX, lastY, x, y));
             if (c.entered && !inside(c, x, y)) {
                 it.remove();
                 cut(c, x - lastX, y - lastY);
@@ -308,11 +325,16 @@ public class FallingCookiesView extends View {
     }
 
     private boolean segmentHitsCookie(Cookie c, float x1, float y1, float x2, float y2) {
+        return distanceToSegment(c, x1, y1, x2, y2) <= radiusPx;
+    }
+
+    /** Distance from the cookie's center to the closest point of a stroke segment, in px. */
+    private float distanceToSegment(Cookie c, float x1, float y1, float x2, float y2) {
         float dx = x2 - x1;
         float dy = y2 - y1;
         float lenSq = dx * dx + dy * dy;
         float t = lenSq == 0 ? 0 : ((c.x - x1) * dx + (c.y - y1) * dy) / lenSq;
         t = Math.max(0, Math.min(1, t));
-        return inside(c, x1 + t * dx, y1 + t * dy);
+        return (float) Math.hypot(x1 + t * dx - c.x, y1 + t * dy - c.y);
     }
 }

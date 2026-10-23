@@ -93,8 +93,13 @@ class GameEffects {
      * "N in a row!" banner; returns true when that happens.
      */
     boolean hit(float x, float y, float radius, int streak) {
+        return hit(x, y, radius, streak, "+1");
+    }
+
+    /** Same as {@link #hit(float, float, float, int)} with a custom points label, e.g. "+3 Perfect!". */
+    boolean hit(float x, float y, float radius, int streak, String label) {
         burst(x, y, radius);
-        popup("+1", x, y - radius, GOLD, 28);
+        popup(label, x, y - radius, GOLD, 28);
         if (streak > 0 && streak % 5 == 0) {
             popup(streak + " in a row!", x, y - radius - 40 * density, WHITE, 34);
             return true;

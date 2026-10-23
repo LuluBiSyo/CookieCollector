@@ -9,6 +9,8 @@ import android.os.Handler;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.util.Locale;
+
 /**
  * Swipe game: cookies fall from the top of the screen and the user swipes or flicks
  * across each one to slice it.
@@ -22,6 +24,16 @@ public class SwipeGameActivity extends AppCompatActivity implements FallingCooki
     // Falling cookies are drawn smaller than the tap-game targets: Large 16 mm -> ~10 mm, Small 12 mm -> ~8 mm
     private static final float SIZE_SCALE = 0.65f;
 
+    // Every 3 slices in a row makes new cookies fall 10% faster, up to twice the starting speed.
+    // A miss slows back down one level, so the game adapts to the player.
+    private static final int SLICES_PER_LEVEL = 3;
+    private static final float LEVEL_SPEEDUP = 0.9f;
+    private static final long MIN_FALL_MILLIS = FallingCookiesView.START_FALL_MILLIS / 2;
+
+    // Accuracy bonus: how close to the center the swipe passes, as a fraction of the cookie radius
+    private static final float PERFECT_OFFSET = 0.25f;
+    private static final float GREAT_OFFSET = 0.5f;
+
     UserAndStudyInfo infoData;
     FallingCookiesView fallingCookiesView;
     GameSounds sounds;
@@ -30,11 +42,16 @@ public class SwipeGameActivity extends AppCompatActivity implements FallingCooki
     int state = INSTRUCTIONS;
     int cookiesDone = 0;
     int totalHits = 0;
+    int points = 0;
     int streak = 0;
     int bestStreak = 0;
+    int level = 1;
+    int topLevel = 1;
+    int slicesTowardLevel = 0;
+    long fallMillis = FallingCookiesView.START_FALL_MILLIS;
     long totalTime = 0;
     boolean running = false;
-    final StringBuilder results = new StringBuilder("Cookie,Size,Duration,Success\n");
+    final StringBuilder results = new StringBuilder("Cookie,Size,FallTime,Duration,Offset,Points,Success\n");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,17 +132,46 @@ public class SwipeGameActivity extends AppCompatActivity implements FallingCooki
         totalHits++;
         streak++;
         bestStreak = Math.max(bestStreak, streak);
+
+        float offset = cookie.minOffsetPx / fallingCookiesView.getRadiusPx();
+        int earned;
+        String label;
+        if (offset <= PERFECT_OFFSET) { earned = 3; label = "+3 Perfect!"; }
+        else if (offset <= GREAT_OFFSET) { earned = 2; label = "+2 Great!"; }
+        else { earned = 1; label = "+1"; }
+        points += earned;
+
         sounds.playHit(streak);
-        if (fallingCookiesView.getEffects().hit(x, y, fallingCookiesView.getRadiusPx(), streak)) sounds.playMilestone();
-        addResult(cookie, true);
+        boolean milestone = fallingCookiesView.getEffects().hit(x, y, fallingCookiesView.getRadiusPx(), streak, label);
+        if (levelUp() || milestone) sounds.playMilestone();
+        addResult(cookie, earned);
     }
 
     @Override
     public void onCookieMissed(FallingCookiesView.Cookie cookie) {
         streak = 0;
+        slicesTowardLevel = 0;
+        if (level > 1) {
+            level--;
+            fallMillis = Math.min(FallingCookiesView.START_FALL_MILLIS, (long) (fallMillis / LEVEL_SPEEDUP));
+            fallingCookiesView.setFallMillis(fallMillis);
+        }
         sounds.playMiss();
         GameUtils.vibrate(this, 40);
-        addResult(cookie, false);
+        addResult(cookie, 0);
+    }
+
+    /** Speeds up after enough slices in a row; returns true when the level went up. */
+    private boolean levelUp() {
+        if (++slicesTowardLevel < SLICES_PER_LEVEL || fallMillis <= MIN_FALL_MILLIS) return false;
+        slicesTowardLevel = 0;
+        level++;
+        topLevel = Math.max(topLevel, level);
+        fallMillis = Math.max(MIN_FALL_MILLIS, (long) (fallMillis * LEVEL_SPEEDUP));
+        fallingCookiesView.setFallMillis(fallMillis);
+        fallingCookiesView.getEffects().popup("Faster! Level " + level, fallingCookiesView.getWidth() / 2f,
+                fallingCookiesView.getHeight() / 2f, GameEffects.WHITE, 34);
+        return true;
     }
 
     @Override
@@ -133,10 +179,15 @@ public class SwipeGameActivity extends AppCompatActivity implements FallingCooki
         finished();
     }
 
-    void addResult(FallingCookiesView.Cookie cookie, boolean success) {
+    /** One results row: fall time is the cookie's speed setting; offset is how far the cut passed from its center, in mm. */
+    void addResult(FallingCookiesView.Cookie cookie, int earned) {
+        boolean success = earned > 0;
         results.append(cookie.number).append(",");
-        results.append(String.format("%.1f", cookieDiameterMm)).append(",");
-        results.append(String.format("%.3f", cookie.fallingMillis / 1000f)).append(",");
+        results.append(String.format(Locale.US, "%.1f", cookieDiameterMm)).append(",");
+        results.append(String.format(Locale.US, "%.2f", cookie.fallMillis / 1000f)).append(",");
+        results.append(String.format(Locale.US, "%.3f", cookie.fallingMillis / 1000f)).append(",");
+        results.append(success ? String.format(Locale.US, "%.2f", GameUtils.pxToMm(this, cookie.minOffsetPx)) : "").append(",");
+        results.append(earned).append(",");
         results.append(success).append("\n");
         cookiesDone++;
         displayTrialsDone();
@@ -144,7 +195,8 @@ public class SwipeGameActivity extends AppCompatActivity implements FallingCooki
 
     void displayTrialsDone() {
         TextView trialsTextView = findViewById(R.id.trialsTextView);
-        trialsTextView.setText(GameUtils.scoreBar(totalHits, infoData.getTotalTrials() - cookiesDone, totalTime));
+        trialsTextView.setText(String.format(Locale.US, "Score: %d   Lv %d   Left: %d",
+                points, level, infoData.getTotalTrials() - cookiesDone));
     }
 
     void finished() {
@@ -153,7 +205,8 @@ public class SwipeGameActivity extends AppCompatActivity implements FallingCooki
         displayTrialsDone();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(GameUtils.finishedMessage(totalHits, infoData.getTotalTrials(), bestStreak, totalTime));
+        builder.setMessage(GameUtils.finishedMessage(totalHits, infoData.getTotalTrials(), bestStreak, totalTime)
+                + "\nScore: " + points + " points, top level " + topLevel + ".");
         builder.setCancelable(false);
         builder.setPositiveButton("OK", (dialog, which) -> {
             Intent intent = new Intent(this, ResultsActivity.class);
