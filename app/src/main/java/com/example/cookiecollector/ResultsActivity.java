@@ -16,23 +16,28 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+/** Shows the per-trial results table and, for the tap game, the Parkinson's risk estimate. */
 public class ResultsActivity extends AppCompatActivity {
+    static final String EXTRA_RESULTS = "results";
+    static final String EXTRA_MEAN_PROBABILITY = "meanProbability";
+    // The risk model was built for the tap game, so the swipe game sets this to false
+    static final String EXTRA_SHOW_RISK = "showRisk";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_results);
 
-// Find the views
-        TextView probabilityTextView = findViewById(R.id.probabilityTextView); // Find the new TextView
+        // Find the views
+        TextView probabilityTextView = findViewById(R.id.probabilityTextView);
         Button restartButton = findViewById(R.id.restartButton);
         TableLayout tableLayout = findViewById(R.id.resultsTableLayout);
 
         // Get the data from the intent
         Intent intent = getIntent();
-        String resultsData = intent.getStringExtra("key_results_data");
+        String resultsData = intent.getStringExtra(EXTRA_RESULTS);
         // Retrieve the mean probability, provide a default value (e.g., -1.0f) if not found
-        float meanProbability = intent.getFloatExtra("key_mean_probability", -1.0f);
+        float meanProbability = intent.getFloatExtra(EXTRA_MEAN_PROBABILITY, -1.0f);
 
         // Display the probability score with conditional coloring
         if (meanProbability >= 0) {
@@ -59,12 +64,12 @@ public class ResultsActivity extends AppCompatActivity {
             // Set the styled text on the TextView
             probabilityTextView.setText(ssb);
 
+        } else if (!intent.getBooleanExtra(EXTRA_SHOW_RISK, true)) {
+            probabilityTextView.setVisibility(View.GONE);
         } else {
             probabilityTextView.setText("Risk score could not be calculated.");
             probabilityTextView.setTextColor(Color.BLACK); // Set default color for the error message
         }
-
-
 
         // Populate the table
         if (resultsData != null && !resultsData.isEmpty()) {
@@ -79,7 +84,7 @@ public class ResultsActivity extends AppCompatActivity {
 
         // Set listener for the restart button
         restartButton.setOnClickListener(v -> {
-            Intent restartIntent = new Intent(ResultsActivity.this, MainActivity.class);
+            Intent restartIntent = new Intent(ResultsActivity.this, SetupActivity.class);
             restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(restartIntent);
             finish();
@@ -126,6 +131,4 @@ public class ResultsActivity extends AppCompatActivity {
         return textView;
     }
 }
-
-
 

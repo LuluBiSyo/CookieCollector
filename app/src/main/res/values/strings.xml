@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">Cookie Collector</string>
 
+    <string name="game">Game</string>
+    <string name="tap_game">Tap the cookie</string>
+    <string name="swipe_game">Swipe the falling cookies</string>
+
     <string name="id">ID</string>
 
     <string name="gender">Gender</string>
@@ -17,22 +21,10 @@
     <string name="finger">Finger</string>
     <string name="thumb">Thumb</string>
     <string name="index">Index</string>
-    <string name="other_finger">Other</string>
-
-    <string name="layout">Layout</string>
-    <string name="three_three">3x3</string>
-    <string name="three_four">4x3</string>
 
     <string name="target_size">Target size</string>
     <string name="small">Small</string>
-    <string name="medium">Medium</string>
     <string name="large">Large</string>
-
-    <string name="target_distance">Distance between targets (between edges)</string>
-    <string name="close">Close</string>
-    <string name="mediumDist">Medium</string>
-    <string name="far">Far</string>
-    <string name="very_far">Very Far</string>
 
     <string name="session">Session</string>
     <string name="warmup">Warmup</string>
@@ -41,4 +33,5 @@
     <string name="start">START GAME</string>
 
     <string name="instructions">When a cookie appears, tap it as quickly as you can.</string>
+    <string name="swipe_instructions">Cookies will fall from the top of the screen. Slice each one by swiping or flicking your finger across it, like a knife, before it reaches the bottom.</string>
 </resources>
