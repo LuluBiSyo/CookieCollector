@@ -87,6 +87,9 @@ public class FallingCookiesView extends View {
     private long lastFrameTime;
     private long sinceLastSpawn;
     private long fallMillis = START_FALL_MILLIS;
+    private final ArrayList<ArrayList<float[]>> strokes = new ArrayList<>();
+    private ArrayList<float[]> currentStroke;
+    private long strokeStart;
     private float lastX;
     private float lastY;
 
@@ -128,6 +131,8 @@ public class FallingCookiesView extends View {
     void pause() {
         running = false;
         trail.clear();
+        // A swipe cut short by the pause isn't a complete gesture
+        currentStroke = null;
         invalidate();
     }
 
@@ -270,6 +275,7 @@ public class FallingCookiesView extends View {
         if (!running) return true;
         float x = e.getX();
         float y = e.getY();
+        recordStroke(e);
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 trail.clear();
@@ -295,6 +301,33 @@ public class FallingCookiesView extends View {
         lastY = y;
         return true;
     }
+
+    /**
+     * Keeps every touch sample of every complete swipe (touch-down to touch-up) for the
+     * kinematic analysis. Each sample is {time ms since touch-down, x px, y px}.
+     */
+    private void recordStroke(MotionEvent e) {
+        int action = e.getActionMasked();
+        if (action == MotionEvent.ACTION_DOWN) {
+            currentStroke = new ArrayList<>();
+            strokeStart = e.getEventTime();
+        }
+        if (currentStroke == null) return;
+        for (int h = 0; h < e.getHistorySize(); h++) {
+            currentStroke.add(new float[]{e.getHistoricalEventTime(h) - strokeStart, e.getHistoricalX(h), e.getHistoricalY(h)});
+        }
+        currentStroke.add(new float[]{e.getEventTime() - strokeStart, e.getX(), e.getY()});
+        if (action == MotionEvent.ACTION_UP) {
+            strokes.add(currentStroke);
+            currentStroke = null;
+        }
+        else if (action == MotionEvent.ACTION_CANCEL) {
+            currentStroke = null;
+        }
+    }
+
+    /** Complete swipes recorded so far, in screen pixels. */
+    ArrayList<ArrayList<float[]>> getStrokes() { return strokes; }
 
     private void moveTo(float x, float y) {
         Iterator<Cookie> it = cookies.iterator();

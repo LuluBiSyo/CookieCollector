@@ -32,6 +32,9 @@
             android:name=".SpiralGameActivity"
             android:exported="false" />
         <activity
+            android:name=".SwipeReportActivity"
+            android:exported="false" />
+        <activity
             android:name=".ResultsActivity"
             android:exported="false" />
     </application>

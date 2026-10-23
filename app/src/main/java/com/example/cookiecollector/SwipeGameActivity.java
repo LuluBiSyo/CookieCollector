@@ -7,8 +7,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.widget.Button;
+import android.util.Log;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Locale;
 
 /**
@@ -204,18 +210,60 @@ public class SwipeGameActivity extends AppCompatActivity implements FallingCooki
         state = FINISHED;
         displayTrialsDone();
 
+        ArrayList<ArrayList<float[]>> strokes = fallingCookiesView.getStrokes();
+        SwipeAnalysis.Report report = SwipeAnalysis.analyze(strokes, GameUtils.mmToPx(this, 1));
+        saveData(strokes);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(GameUtils.finishedMessage(totalHits, infoData.getTotalTrials(), bestStreak, totalTime)
                 + "\nScore: " + points + " points, top level " + topLevel + ".");
         builder.setCancelable(false);
         builder.setPositiveButton("OK", (dialog, which) -> {
-            Intent intent = new Intent(this, ResultsActivity.class);
-            intent.putExtra(ResultsActivity.EXTRA_RESULTS, results.toString());
-            intent.putExtra(ResultsActivity.EXTRA_SHOW_RISK, false);
+            Intent intent = new Intent(this, SwipeReportActivity.class);
+            intent.putExtra(SwipeReportActivity.EXTRA_REPORT, report);
             startActivity(intent);
             finish();
         });
         builder.setNegativeButton("BACK", (dialog, which) -> finish());
         GameUtils.showLarge(builder.create());
+    }
+
+    /**
+     * Saves every touch sample of every swipe to swipe_strokes_<id>_<time>.csv and the per-cookie
+     * results to swipe_cookies_<id>_<time>.csv, in the app's external files folder.
+     */
+    void saveData(ArrayList<ArrayList<float[]>> strokes) {
+        UserAndStudyInfo x = infoData;
+        String stamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String c = ",";
+        String studyColumns = x.getId() + c + x.getGender() + c + x.getAge() + c + x.getHand() + c + x.getFinger() + c;
+        String studyHeader = "ID,Gender,Age,Hand,Finger,";
+        float mmPx = GameUtils.mmToPx(this, 1);
+
+        StringBuilder strokeRows = new StringBuilder(studyHeader + "Swipe,TimeMs,XMm,YMm\n");
+        for (int i = 0; i < strokes.size(); i++) {
+            for (float[] s : strokes.get(i)) {
+                strokeRows.append(studyColumns).append(i + 1).append(c).append((long) s[0]).append(c)
+                        .append(String.format(Locale.US, "%.2f,%.2f", s[1] / mmPx, s[2] / mmPx)).append("\n");
+            }
+        }
+        StringBuilder cookieRows = new StringBuilder(studyHeader);
+        String[] lines = results.toString().split("\n");
+        cookieRows.append(lines[0]).append("\n");
+        for (int i = 1; i < lines.length; i++) cookieRows.append(studyColumns).append(lines[i]).append("\n");
+
+        writeFile("swipe_strokes_" + x.getId() + "_" + stamp + ".csv", strokeRows.toString());
+        writeFile("swipe_cookies_" + x.getId() + "_" + stamp + ".csv", cookieRows.toString());
+    }
+
+    private void writeFile(String name, String content) {
+        File f = new File(getExternalFilesDir(null), name);
+        try (PrintWriter pw = new PrintWriter(f)) {
+            pw.print(content);
+            Log.d("FileSaveSuccess", "Swipe data saved to: " + f.getAbsolutePath());
+        }
+        catch (Exception e) {
+            Log.e("FileSaveError", "Failed to save the file at: " + f.getAbsolutePath(), e);
+        }
     }
 }
