@@ -70,6 +70,7 @@ public class UserAndStudyInfo implements Serializable {
     public int getTotalCircles() { return totalCircles; }
     public int getDistance() { return distance; }
     public int getTotalTrials() { return totalTrials; }
+    public boolean isWarmup() { return totalTrials == totalCircles; }
 
     public int getCorrectSequence(int index) { return correctSequence[index]; }
 

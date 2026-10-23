@@ -33,9 +33,10 @@ public class SetupActivity extends AppCompatActivity {
 
             UserAndStudyInfo infoData = new UserAndStudyInfo(getApplicationContext(), id, gender, age, hand, finger, LAYOUT, size, session);
 
-            RadioGroup gameRadioGroup = findViewById(R.id.gameRadioGroup);
-            Class<?> gameClass = gameRadioGroup.getCheckedRadioButtonId() == R.id.swipeGameRadioButton
-                    ? SwipeGameActivity.class : TapGameActivity.class;
+            int game = ((RadioGroup) findViewById(R.id.gameRadioGroup)).getCheckedRadioButtonId();
+            Class<?> gameClass = game == R.id.swipeGameRadioButton ? SwipeGameActivity.class
+                    : game == R.id.spiralGameRadioButton ? SpiralGameActivity.class
+                    : TapGameActivity.class;
             Intent intent = new Intent(getApplicationContext(), gameClass);
             intent.putExtra(EXTRA_INFO, infoData);
             startActivity(intent);

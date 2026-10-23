@@ -4,6 +4,7 @@
     <string name="game">Game</string>
     <string name="tap_game">Tap the cookie</string>
     <string name="swipe_game">Swipe the falling cookies</string>
+    <string name="spiral_game">Guide the cookie out of the spiral tunnel</string>
 
     <string name="id">ID</string>
 
@@ -34,4 +35,5 @@
 
     <string name="instructions">When a cookie appears, tap it as quickly as you can.</string>
     <string name="swipe_instructions">Cookies will fall from the top of the screen. Slice each one by swiping or flicking your finger across it, like a knife, before it reaches the bottom.</string>
+    <string name="spiral_instructions">The cookie is stuck in the middle of a spiral tunnel. Put your finger on it and slowly slide it all the way to the EXIT. Try not to touch the walls, and collect the sprinkles on the way.</string>
 </resources>

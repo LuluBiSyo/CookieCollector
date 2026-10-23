@@ -29,6 +29,9 @@
             android:name=".SwipeGameActivity"
             android:exported="false" />
         <activity
+            android:name=".SpiralGameActivity"
+            android:exported="false" />
+        <activity
             android:name=".ResultsActivity"
             android:exported="false" />
     </application>

@@ -61,13 +61,18 @@ class GameEffects {
         popupPaint.setShadowLayer(4 * density, 0, 2 * density, 0x80000000);
     }
 
-    /** Crumbs flying out of a broken cookie plus a golden shockwave ring. */
-    void burst(float x, float y, float radius) {
+    /** A golden ring that expands and fades. */
+    void ring(float x, float y, float radius) {
         Ring ring = new Ring();
         ring.x = x;
         ring.y = y;
         ring.r = radius;
         rings.add(ring);
+    }
+
+    /** Crumbs flying out of a broken cookie plus a golden shockwave ring. */
+    void burst(float x, float y, float radius) {
+        ring(x, y, radius);
         int[] colors = {0xFFC68642, 0xFF8D5524, 0xFFE0AC69, 0xFF5C3A1E};
         for (int i = 0; i < 14; i++) {
             Crumb cr = new Crumb();
