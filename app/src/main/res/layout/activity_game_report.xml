@@ -4,10 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/game_background"
-    tools:context=".SwipeReportActivity">
+    tools:context=".GameReportActivity">
 
-    <com.example.cookiecollector.SwipeReportView
-        android:id="@+id/swipeReportView"
+    <com.example.cookiecollector.GameReportView
+        android:id="@+id/gameReportView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

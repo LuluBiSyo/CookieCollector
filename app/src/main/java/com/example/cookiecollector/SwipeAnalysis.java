@@ -3,6 +3,7 @@ package com.example.cookiecollector;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Kinematic analysis of the swipe game's strokes, following Bi, Chen and Gu, "Modeling and
@@ -151,6 +152,57 @@ final class SwipeAnalysis {
             r.pdScore = (float) (1 / (1 + Math.exp(-llr / count)));
         }
         return r;
+    }
+
+    /** The one-screen report: gauge, five features against the paper's groups, and two charts. */
+    static ReportData toReportData(Report r) {
+        ReportData d = new ReportData();
+        d.title = "Your Swift Slice report";
+        d.subtitle = String.format(Locale.US, "%d of %d swipes analysed", r.validStrokes, r.totalStrokes);
+        d.score = r.pdScore;
+        d.scoreCaption = "PD-like swiping";
+        d.notEnoughData = "Play again and slice at least 5 cookies";
+        d.features.add(new ReportData.Feature("Swipe duration", String.format(Locale.US, "%.2f s", r.meanDurationS),
+                0, Math.max(0.9f, r.meanDurationS * 1.2f), DURATION_S.nonPdMean, DURATION_S.pdMean, r.meanDurationS));
+        d.features.add(new ReportData.Feature("Average speed", String.format(Locale.US, "%.0f mm/s", r.meanSpeed),
+                0, Math.max(400, r.meanSpeed * 1.2f), SPEED_MM_S.nonPdMean, SPEED_MM_S.pdMean, r.meanSpeed));
+        d.features.add(new ReportData.Feature("Straightness", String.format(Locale.US, "%.3f", r.meanStraightness),
+                0.75f, 1f, STRAIGHTNESS.nonPdMean, STRAIGHTNESS.pdMean, Math.max(0.75f, r.meanStraightness)));
+        d.features.add(new ReportData.Feature("Time per mm of swipe",
+                r.slopeUsed ? String.format(Locale.US, "%.1f ms/mm", r.slopeMsPerMm) : "needs more swipes",
+                0, r.slopeUsed ? Math.max(12, r.slopeMsPerMm * 1.2f) : 12, MS_PER_MM.nonPdMean, MS_PER_MM.pdMean,
+                r.slopeUsed ? Math.max(0, r.slopeMsPerMm) : Float.NaN));
+        d.features.add(new ReportData.Feature("Path done at half time", String.format(Locale.US, "%.0f%%", r.meanMidShare * 100),
+                25, 60, NON_PD_MID_SHARE * 100, PD_MID_SHARE * 100, r.meanMidShare * 100));
+
+        // Movement time against length, with each group's fitted line MT = a + bL
+        float maxL = 80, maxT = 1f;
+        for (int i = 0; i < r.lengthsMm.length; i++) {
+            maxL = Math.max(maxL, r.lengthsMm[i] * 1.1f);
+            maxT = Math.max(maxT, r.durationsS[i] * 1.1f);
+        }
+        d.leftChart = new ReportData.Chart("Time vs swipe length", "length (mm)", "s", 0, maxL, 0, maxT)
+                .labels("0", String.format(Locale.US, "%.0f", maxL), null, String.format(Locale.US, "%.1f", maxT))
+                .add(ReportData.Series.line(ReportData.GREEN, new float[]{0, maxL},
+                        new float[]{(float) NON_PD_INTERCEPT_MS / 1000, (float) (NON_PD_INTERCEPT_MS + MS_PER_MM.nonPdMean * maxL) / 1000}))
+                .add(ReportData.Series.line(ReportData.RED, new float[]{0, maxL},
+                        new float[]{(float) PD_INTERCEPT_MS / 1000, (float) (PD_INTERCEPT_MS + MS_PER_MM.pdMean * maxL) / 1000}))
+                .add(ReportData.Series.points(ReportData.WHITE, r.lengthsMm, r.durationsS));
+
+        // Average speed over normalized time, with each group's typical peak speed
+        float maxV = 600;
+        for (float v : r.meanProfile) maxV = Math.max(maxV, v * 1.1f);
+        float[] t = new float[PROFILE_POINTS];
+        for (int j = 0; j < PROFILE_POINTS; j++) t[j] = (float) j / (PROFILE_POINTS - 1);
+        d.rightChart = new ReportData.Chart("Speed profile", "time (start to end)", "mm/s", 0, 1, 0, maxV)
+                .labels("0", "1", null, String.format(Locale.US, "%.0f", maxV))
+                .add(ReportData.Series.dashedY(ReportData.GREEN, (float) NON_PD_PEAK_SPEED))
+                .add(ReportData.Series.dashedY(ReportData.RED, (float) PD_PEAK_SPEED));
+        if (r.validStrokes > 0) d.rightChart.add(ReportData.Series.line(ReportData.WHITE, t, r.meanProfile));
+
+        d.footer1 = "Screening estimate from published group statistics";
+        d.footer2 = "(Bi, Chen & Gu). Not a medical diagnosis.";
+        return d;
     }
 
     /**

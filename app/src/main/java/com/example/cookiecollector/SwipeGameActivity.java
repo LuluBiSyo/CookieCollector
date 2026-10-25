@@ -90,6 +90,7 @@ public class SwipeGameActivity extends AppCompatActivity implements FallingCooki
         });
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.swipe_game_name);
         builder.setMessage(R.string.swipe_instructions);
         builder.setCancelable(false);
         builder.setPositiveButton("BEGIN", (dialog, which) -> {
@@ -219,8 +220,8 @@ public class SwipeGameActivity extends AppCompatActivity implements FallingCooki
                 + "\nScore: " + points + " points, top level " + topLevel + ".");
         builder.setCancelable(false);
         builder.setPositiveButton("OK", (dialog, which) -> {
-            Intent intent = new Intent(this, SwipeReportActivity.class);
-            intent.putExtra(SwipeReportActivity.EXTRA_REPORT, report);
+            Intent intent = new Intent(this, GameReportActivity.class);
+            intent.putExtra(GameReportActivity.EXTRA_REPORT, SwipeAnalysis.toReportData(report));
             startActivity(intent);
             finish();
         });

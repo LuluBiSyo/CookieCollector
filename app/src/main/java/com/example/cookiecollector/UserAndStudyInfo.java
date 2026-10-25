@@ -57,6 +57,20 @@ public class UserAndStudyInfo implements Serializable {
         setTouchpoints(totalTrials);
     }
 
+    /** For unit tests: a grid and trial count without reading resources or assets. */
+    UserAndStudyInfo(int rows, int columns, int diameter, int totalTrials) {
+        id = gender = age = hand = finger = "";
+        this.rows = rows;
+        this.columns = columns;
+        this.diameter = diameter;
+        totalCircles = rows * columns;
+        distance = 22 - diameter;
+        this.totalTrials = totalTrials;
+        correctSequence = new int[totalTrials];
+        correctCoordinates = new float[totalTrials][2];
+        setTouchpoints(totalTrials);
+    }
+
     public String getId() { return id; }
     public String getGender() { return gender; }
     public String getAge() { return age; }

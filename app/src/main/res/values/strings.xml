@@ -1,10 +1,13 @@
 <resources>
-    <string name="app_name">Cookie Collector</string>
+    <string name="app_name">Motor Arcade</string>
 
     <string name="game">Game</string>
-    <string name="tap_game">Tap the cookie</string>
-    <string name="swipe_game">Swipe the falling cookies</string>
-    <string name="spiral_game">Guide the cookie out of the spiral tunnel</string>
+    <string name="tap_game_name">Quick Tap</string>
+    <string name="swipe_game_name">Swift Slice</string>
+    <string name="spiral_game_name">Steady Spiral</string>
+    <string name="tap_game">Quick Tap: tap each cookie as fast as you can</string>
+    <string name="swipe_game">Swift Slice: slice the falling cookies with a swipe</string>
+    <string name="spiral_game">Steady Spiral: guide the cookie out of the tunnel</string>
 
     <string name="id">ID</string>
 

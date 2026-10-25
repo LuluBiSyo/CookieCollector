@@ -32,10 +32,7 @@
             android:name=".SpiralGameActivity"
             android:exported="false" />
         <activity
-            android:name=".SwipeReportActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ResultsActivity"
+            android:name=".GameReportActivity"
             android:exported="false" />
     </application>
 

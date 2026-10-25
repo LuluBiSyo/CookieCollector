@@ -92,6 +92,7 @@ public class TapGameActivity extends AppCompatActivity {
         });
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.tap_game_name);
         builder.setMessage(R.string.instructions);
         builder.setCancelable(false);
         builder.setPositiveButton("BEGIN", (dialog, which) -> {
@@ -261,40 +262,14 @@ public class TapGameActivity extends AppCompatActivity {
         state = FINISHED;
         displayTrialsDone();
         if (SAVE_DATA) save();
-
-        // Results table passed to ResultsActivity, plus the per-touch risk estimates
-        StringBuilder results = new StringBuilder("Trial,Distance,Size,Duration,Success\n");
-        ArrayList<Float> probabilityList = new ArrayList<>();
-        float[] prevCoor = {-1, -1};
-        for (int i = 0; i < infoData.getTotalTrials(); i++) {
-            float[] corrCoor = infoData.getCorrectCoordinates(i);
-            float dist = (prevCoor[0] == -1) ? 0 : (float) Math.sqrt(Math.pow(prevCoor[0] - corrCoor[0], 2) + Math.pow(prevCoor[1] - corrCoor[1], 2));
-            if (dist > 0) {
-                for (UserAndStudyInfo.Touchpoint t : infoData.getTouchpoints(i)) {
-                    results.append(i).append(",");
-                    results.append(String.format("%.2f", dist)).append(",");
-                    results.append(infoData.getDiameter()).append(",");
-                    results.append(String.format("%.3f", t.milliseconds / 1000f)).append(",");
-                    results.append(t.correct).append("\n");
-
-                    float probability = ParkinsonsProbabilityCalculator.calculateParkinsonProbability(dist, infoData.getDiameter(), t.milliseconds);
-                    if (probability > 0) probabilityList.add(probability);
-                }
-            }
-            prevCoor = corrCoor;
-        }
+        ReportData report = TapAnalysis.analyze(infoData);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(GameUtils.finishedMessage(totalHits, infoData.getTotalTrials(), bestStreak, totalTime));
         builder.setCancelable(false);
         builder.setPositiveButton("OK", (dialog, which) -> {
-            Intent intent = new Intent(this, ResultsActivity.class);
-            intent.putExtra(ResultsActivity.EXTRA_RESULTS, results.toString());
-            if (!probabilityList.isEmpty()) {
-                float sum = 0;
-                for (Float prob : probabilityList) sum += prob;
-                intent.putExtra(ResultsActivity.EXTRA_MEAN_PROBABILITY, sum / probabilityList.size());
-            }
+            Intent intent = new Intent(this, GameReportActivity.class);
+            intent.putExtra(GameReportActivity.EXTRA_REPORT, report);
             startActivity(intent);
             // So the user can't go back to the finished game
             finish();

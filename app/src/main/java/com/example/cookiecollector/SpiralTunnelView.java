@@ -13,6 +13,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 /**
@@ -39,6 +40,12 @@ public class SpiralTunnelView extends View {
         float meanDeviationMm;
         float maxDeviationMm;
         int lifts;
+        // For the report, all in on-screen mm relative to the spiral's center
+        ArrayList<float[]> samples;   // {time ms, x, y, distance along tunnel, signed deviation, contact 0/1}
+        float[] centerX, centerY;     // tunnel center line, every few points
+        float tunnelWidthMm;
+        float wallContactMm;          // deviation at which the cookie touches a wall
+        float tunnelLengthMm;
     }
 
     private static final float WALL_MM = 1.5f;
@@ -108,6 +115,7 @@ public class SpiralTunnelView extends View {
     private double deviationSum;
     private float maxDeviation;
     private int deviationCount;
+    private ArrayList<float[]> samples = new ArrayList<>();
 
     public SpiralTunnelView(Context context) { this(context, null); }
 
@@ -156,6 +164,7 @@ public class SpiralTunnelView extends View {
         deviationSum = 0;
         deviationCount = 0;
         maxDeviation = 0;
+        samples = new ArrayList<>();
         nearestIdx = maxIdx = 0;
         pausedTotal = 0;
         invalidate();
@@ -443,6 +452,7 @@ public class SpiralTunnelView extends View {
     }
 
     private void logSample(float x, float y, long elapsed, String event, int idx, float signedDevMm) {
+        samples.add(new float[]{elapsed, (x - cx) / mmPx, (y - cy) / mmPx, arc[idx] * scale, signedDevMm, inContact ? 1 : 0});
         log.append(String.format(Locale.US, "%d,%s,%d,%s,%.2f,%.2f,%.2f,%.2f,%d\n",
                 spiral + 1, clockwise ? "CW" : "CCW", elapsed, event,
                 (x - cx) / mmPx, (y - cy) / mmPx, arc[idx] * scale, signedDevMm, inContact ? 1 : 0));
@@ -473,6 +483,17 @@ public class SpiralTunnelView extends View {
         r.meanDeviationMm = deviationCount == 0 ? 0 : (float) (deviationSum / deviationCount);
         r.maxDeviationMm = maxDeviation;
         r.lifts = lifts;
+        r.samples = samples;
+        int every = 4;
+        r.centerX = new float[(n + every - 1) / every + 1];
+        r.centerY = new float[r.centerX.length];
+        for (int i = 0, j = 0; j < r.centerX.length; i = Math.min(n - 1, i + every), j++) {
+            r.centerX[j] = (px[i] - cx) / mmPx;
+            r.centerY[j] = (py[i] - cy) / mmPx;
+        }
+        r.tunnelWidthMm = tunnelMm * scale;
+        r.wallContactMm = (tunnelMm - cookieMm) / 2 * scale;
+        r.tunnelLengthMm = arc[n - 1] * scale;
         if (listener != null) listener.onSpiralEscaped(r);
     }
 

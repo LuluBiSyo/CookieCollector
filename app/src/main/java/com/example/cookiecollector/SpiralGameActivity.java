@@ -13,6 +13,7 @@ import android.widget.TextView;
 import java.io.File;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
@@ -47,7 +48,7 @@ public class SpiralGameActivity extends AppCompatActivity implements SpiralTunne
     long totalTime = 0;
     boolean running = false;
     final StringBuilder samples = new StringBuilder();
-    final StringBuilder results = new StringBuilder("Spiral,Dir,Time,Bumps,BumpTime,MeanDev,Lifts\n");
+    final ArrayList<SpiralTunnelView.Result> results = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +84,7 @@ public class SpiralGameActivity extends AppCompatActivity implements SpiralTunne
         });
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(R.string.spiral_game_name);
         builder.setMessage(R.string.spiral_instructions);
         builder.setCancelable(false);
         builder.setPositiveButton("BEGIN", (dialog, which) -> {
@@ -145,8 +147,7 @@ public class SpiralGameActivity extends AppCompatActivity implements SpiralTunne
     @Override
     public void onSpiralEscaped(SpiralTunnelView.Result r) {
         sounds.playMilestone();
-        results.append(String.format(Locale.US, "%d,%s,%.2f,%d,%.2f,%.2f,%d\n", r.spiral + 1, r.clockwise ? "CW" : "CCW",
-                r.millis / 1000f, r.bumps, r.bumpMillis / 1000f, r.meanDeviationMm, r.lifts));
+        results.add(r);
         spiralsDone++;
         displayScore();
         new Handler().postDelayed(() -> {
@@ -167,6 +168,7 @@ public class SpiralGameActivity extends AppCompatActivity implements SpiralTunne
         running = false;
         state = FINISHED;
         saveSamples();
+        ReportData report = SpiralAnalysis.analyze(results);
 
         String message = String.format(Locale.US, "You escaped %d %s with %d %s in %d seconds!",
                 totalSpirals, totalSpirals == 1 ? "spiral" : "spirals", totalBumps, totalBumps == 1 ? "bump" : "bumps", totalTime);
@@ -176,9 +178,8 @@ public class SpiralGameActivity extends AppCompatActivity implements SpiralTunne
         builder.setMessage(message);
         builder.setCancelable(false);
         builder.setPositiveButton("OK", (dialog, which) -> {
-            Intent intent = new Intent(this, ResultsActivity.class);
-            intent.putExtra(ResultsActivity.EXTRA_RESULTS, results.toString());
-            intent.putExtra(ResultsActivity.EXTRA_SHOW_RISK, false);
+            Intent intent = new Intent(this, GameReportActivity.class);
+            intent.putExtra(GameReportActivity.EXTRA_REPORT, report);
             startActivity(intent);
             finish();
         });

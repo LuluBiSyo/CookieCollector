@@ -22,7 +22,8 @@ public class ParkinsonsProbabilityCalculator {
     private static final float PD_c = 106104.84F;
     private static final float PD_d = 11103.88F;
 
-    private static final boolean DEBUG = true;
+    // Logs every calculation; off so it can also run in plain JVM unit tests
+    private static final boolean DEBUG = false;
 
     public static float calculateParkinsonProbability(float distance, float width, float movementTime) {
         if (movementTime <= 0 || distance <= 0 || width <= 0) {
@@ -65,6 +66,26 @@ public class ParkinsonsProbabilityCalculator {
 
         return probability_PD / (probability_PD + probability_NON_PD);
     }
+
+    /** Predicted mean movement time (ms) for one group, from its Finger-Fitts model. */
+    static float predictedMeanMt(boolean pd, float distance, float width) {
+        return pd ? calculateMeanMT(PD_a, PD_b, calculateIndexOfDifficulty(PD_w, distance, width))
+                : calculateMeanMT(NON_PD_a, NON_PD_b, calculateIndexOfDifficulty(NON_PD_w, distance, width));
+    }
+
+    /** Predicted standard deviation of movement time (ms) for one group. */
+    static float predictedSdMt(boolean pd, float distance, float width) {
+        return (float) Math.sqrt(pd ? calculateMTVariance(PD_c, PD_d, calculateIndexOfDifficulty(PD_w, distance, width))
+                : calculateMTVariance(NON_PD_c, NON_PD_d, calculateIndexOfDifficulty(NON_PD_w, distance, width)));
+    }
+
+    /** Finger-Fitts index of difficulty (bits) with the non-PD model's finger precision. */
+    static float indexOfDifficulty(float distance, float width) {
+        return calculateIndexOfDifficulty(NON_PD_w, distance, width);
+    }
+
+    static float nonPdSlope() { return NON_PD_b; }
+    static float pdSlope() { return PD_b; }
 
     private static float calculateIndexOfDifficulty(float w, float distance, float width) {
         return (float) (Math.log(distance / Math.sqrt(width * width - w * w) + 1) /  Math.log(2));

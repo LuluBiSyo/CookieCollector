@@ -5,17 +5,17 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-/** End-of-game screen for the swipe game: the swipe kinematics report on a single screen. */
-public class SwipeReportActivity extends AppCompatActivity {
-    static final String EXTRA_REPORT = "swipeReport";
+/** End-of-game screen shared by all games: the motor analysis report on a single screen. */
+public class GameReportActivity extends AppCompatActivity {
+    static final String EXTRA_REPORT = "report";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_swipe_report);
+        setContentView(R.layout.activity_game_report);
 
-        SwipeReportView view = findViewById(R.id.swipeReportView);
-        view.setReport((SwipeAnalysis.Report) getIntent().getSerializableExtra(EXTRA_REPORT));
+        GameReportView view = findViewById(R.id.gameReportView);
+        view.setReport((ReportData) getIntent().getSerializableExtra(EXTRA_REPORT));
 
         findViewById(R.id.restartButton).setOnClickListener(v -> {
             Intent restartIntent = new Intent(this, SetupActivity.class);
